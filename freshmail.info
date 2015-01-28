@@ -1,0 +1,11 @@
+; $Id$
+name = FreshMail
+description = Freshmail Qunabu.
+core = 7.x
+
+; Information added by drupal.org packaging script on 2012-08-27
+version = "7.x-1.2"
+core = "7.x"
+project = "freshmail"
+datestamp = "1346083034"
+

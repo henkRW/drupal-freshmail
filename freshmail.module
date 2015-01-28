@@ -1,0 +1,181 @@
+<?php
+
+require_once 'api/class.rest.php';
+//require_once 'api/config.php';
+
+define ( 'FM_API_KEY', variable_get('freshmail_api_key') );
+define ( 'FM_API_SECRET', variable_get('freshmail_api_secret_key') );
+define ( 'FM_API_LIST', variable_get('freshmail_list_api_key') );
+
+
+function freshmail_menu() {
+  $items['frashmail_api'] = array(
+    'access callback'   => true, // available to all
+    'page callback'     => 'freshmail_api', // defined below
+    'delivery callback' => 'drupal_json_output'
+  );
+  return $items;
+}
+
+function freshmail_api() {
+
+  $rest = new FmRestAPI();
+  $rest->setApiKey( FM_API_KEY );
+  $rest->setApiSecret( FM_API_SECRET );
+
+
+
+  $data = array(
+    'email' => isset($_POST['email']) ? $_POST['email'] : 'm@qunabu.com',
+    //'list'  => '9qjbjgt5dh'
+    'list'  => FM_API_LIST
+  );
+
+  try {
+    $response = $rest->doRequest('subscriber/add', $data);
+    return $response;
+  } catch (Exception $e) {
+    $errors = array(
+      1301 =>  "Adres email jest niepoprawny",
+      1302 =>  "Lista subskrypcyjna nie istnieje lub brak hash'a listy",
+      1303 =>  "Jedno lub więcej pól dodatkowych jest niepoprawne",
+      1304 =>  "Subskrybent już istnieje w tej liście subskrypcyjnej i ma status Aktywny lub Do aktywacji",
+      1305 =>  "Próbowano nadać niepoprawny status subskrybenta",
+    );
+    $message = $e->getMessage();
+    if (isset($errors[$e->getCode()])) {
+      $message = $errors[$e->getCode()];
+    }
+    return array(
+      'error_message' => $message,
+      'error_code' => $e->getCode(),
+      'http_code' => $rest->getHttpCode(),
+      'FM_API_KEY'=>FM_API_KEY,
+      'FM_API_SECRET'=>FM_API_SECRET,
+      'FM_API_LIST'=>FM_API_LIST,
+      'data'=>$data
+    );
+  }
+
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function freshmail_block_info() {
+  $blocks = array();
+  $blocks['freshmail_block'] = array(
+    'info' => t('Freshmail Block'),
+  );
+
+  return $blocks;
+}
+
+function freshmail_block_view($delta = '')
+{
+  /** TODO dodać zmienną z hashem listy */
+  if($delta == 'freshmail_block')
+  {
+    drupal_add_js(drupal_get_path('module', 'freshmail').'/js/freshmail.js');
+    $variables = array(
+      'action'=> base_path().'frashmail_api',
+      'send'=>t("Wyślij"),
+      'placeholder'=>t("Twój adres e-mail")
+    );
+    $block = array
+    (
+      //'subject' => t('Freshmail Block'),
+      'content' => theme('freshmail_template', $variables),
+      //'content' => '<p>' . t('This is some text that will go in the block.') . '</p>',
+    );
+    return $block;
+  }
+}
+
+function freshmail_theme_registry_alter(&$theme_registry) {
+  // add views templates to registry
+  $path = drupal_get_path('module', 'freshmail') . '/templates';
+  $templates = drupal_find_theme_templates($theme_registry, '.tpl.php', $path);
+  foreach($templates as &$template) {
+    $template['type'] = 'theme_engine';
+  }
+  $theme_registry += $templates;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function freshmail_theme($existing, $type, $theme, $path) {
+  return array(
+    'freshmail_template' => array(
+      'variables' => array(),
+      //'file' => 'register',
+      'template' => 'templates/register',
+    ),
+  );
+}
+
+
+
+
+/**
+ * Implements hook_block_configure().
+ */
+function freshmail_block_configure($delta = '') {
+  $form = array();
+  switch ($delta) {
+    case 'freshmail_block':
+      $form['freshmail_list_api_key'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Klucz Api listy'),
+        '#size' => 10,
+        '#default_value' => variable_get('freshmail_list_api_key'),
+      );
+      $form['freshmail_api_key'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Klucz Api'),
+        '#size' => 32,
+        '#default_value' => variable_get('freshmail_api_key'),
+      );
+      $form['freshmail_api_secret_key'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Klucz Api Sekretny'),
+        '#size' => 40,
+        '#default_value' => variable_get('freshmail_api_secret_key'),
+      );
+      break;
+  }
+  return $form;
+}
+
+/**
+ * Implements hook_block_save().
+ */
+function freshmail_block_save($delta = '', $edit = array()) {
+  switch ($delta) {
+    case 'freshmail_block':
+      variable_set('freshmail_list_api_key', $edit['freshmail_list_api_key']);
+      variable_set('freshmail_api_key', $edit['freshmail_api_key']);
+      variable_set('freshmail_api_secret_key', $edit['freshmail_api_secret_key']);
+      break;
+  }
+}
+/**
+ * Returns block contents
+ */
+/*
+function freshmail_block_list($block_id) {
+  $block = array();
+  var_dump($block_id);
+  switch ($block_id) {
+    case 'freshmail_block':
+      $block = array(
+        'freshmail_list_api_key' => 'a'.variable_get('freshmail_list_api_key'),
+        'freshmail_api_key' => variable_get('freshmail_api_key'),
+        'freshmail_api_secret_key' => variable_get('freshmail_api_secret_key'),
+      );
+      break;
+  }
+  return $block;
+}
+*/
