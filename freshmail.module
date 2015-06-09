@@ -1,17 +1,15 @@
 <?php
 
 require_once 'api/class.rest.php';
-//require_once 'api/config.php';
 
-define ( 'FM_API_KEY', variable_get('freshmail_api_key') );
-define ( 'FM_API_SECRET', variable_get('freshmail_api_secret_key') );
-define ( 'FM_API_LIST', variable_get('freshmail_list_api_key') );
-
+define('FM_API_KEY', variable_get('freshmail_api_key'));
+define('FM_API_SECRET', variable_get('freshmail_api_secret_key'));
+define('FM_API_LIST', variable_get('freshmail_list_api_key'));
 
 function freshmail_menu() {
   $items['frashmail_api'] = array(
-    'access callback'   => true, // available to all
-    'page callback'     => 'freshmail_api', // defined below
+    'access callback' => true, // available to all
+    'page callback' => 'freshmail_api', // defined below
     'delivery callback' => 'drupal_json_output'
   );
   return $items;
@@ -20,15 +18,14 @@ function freshmail_menu() {
 function freshmail_api() {
 
   $rest = new FmRestAPI();
-  $rest->setApiKey( FM_API_KEY );
-  $rest->setApiSecret( FM_API_SECRET );
+  $rest->setApiKey(FM_API_KEY);
+  $rest->setApiSecret(FM_API_SECRET);
 
 
 
   $data = array(
-    'email' => isset($_POST['email']) ? $_POST['email'] : 'm@qunabu.com',
-    //'list'  => '9qjbjgt5dh'
-    'list'  => FM_API_LIST
+    'email' => isset($_POST['email']) ? $_POST['email'] : variable_get('freshmail_mail', 'example@example.com'),
+    'list' => FM_API_LIST
   );
 
   try {
@@ -36,11 +33,11 @@ function freshmail_api() {
     return $response;
   } catch (Exception $e) {
     $errors = array(
-      1301 =>  "Adres email jest niepoprawny",
-      1302 =>  "Lista subskrypcyjna nie istnieje lub brak hash'a listy",
-      1303 =>  "Jedno lub więcej pól dodatkowych jest niepoprawne",
-      1304 =>  "Subskrybent już istnieje w tej liście subskrypcyjnej i ma status Aktywny lub Do aktywacji",
-      1305 =>  "Próbowano nadać niepoprawny status subskrybenta",
+      1301 => t("Email address is incorrect."),
+      1302 => t("List Key is wrong or is empty."),
+      1303 => t("One or more fields are incorrect"),
+      1304 => t("Subscriber is already subscribed to that list."),
+      1305 => t("Wrong subscriber status."),
     );
     $message = $e->getMessage();
     if (isset($errors[$e->getCode()])) {
@@ -50,13 +47,12 @@ function freshmail_api() {
       'error_message' => $message,
       'error_code' => $e->getCode(),
       'http_code' => $rest->getHttpCode(),
-      'FM_API_KEY'=>FM_API_KEY,
-      'FM_API_SECRET'=>FM_API_SECRET,
-      'FM_API_LIST'=>FM_API_LIST,
-      'data'=>$data
+      'FM_API_KEY' => FM_API_KEY,
+      'FM_API_SECRET' => FM_API_SECRET,
+      'FM_API_LIST' => FM_API_LIST,
+      'data' => $data
     );
   }
-
 }
 
 /**
@@ -71,22 +67,18 @@ function freshmail_block_info() {
   return $blocks;
 }
 
-function freshmail_block_view($delta = '')
-{
-  /** TODO dodać zmienną z hashem listy */
-  if($delta == 'freshmail_block')
-  {
-    drupal_add_js(drupal_get_path('module', 'freshmail').'/js/freshmail.js');
+function freshmail_block_view($delta = '') {
+  if ($delta == 'freshmail_block') {
+    drupal_add_js(drupal_get_path('module', 'freshmail') . '/js/freshmail.js');
     $variables = array(
-      'action'=> base_path().'frashmail_api',
-      'send'=>t("Wyślij"),
-      'placeholder'=>t("Twój adres e-mail")
+      'action' => base_path() . 'frashmail_api',
+      'send' => t("Send"),
+      'placeholder' => t("Your email address")
     );
     $block = array
-    (
-      //'subject' => t('Freshmail Block'),
+      (
+      'subject' => '',
       'content' => theme('freshmail_template', $variables),
-      //'content' => '<p>' . t('This is some text that will go in the block.') . '</p>',
     );
     return $block;
   }
@@ -96,7 +88,7 @@ function freshmail_theme_registry_alter(&$theme_registry) {
   // add views templates to registry
   $path = drupal_get_path('module', 'freshmail') . '/templates';
   $templates = drupal_find_theme_templates($theme_registry, '.tpl.php', $path);
-  foreach($templates as &$template) {
+  foreach ($templates as &$template) {
     $template['type'] = 'theme_engine';
   }
   $theme_registry += $templates;
@@ -109,14 +101,10 @@ function freshmail_theme($existing, $type, $theme, $path) {
   return array(
     'freshmail_template' => array(
       'variables' => array(),
-      //'file' => 'register',
       'template' => 'templates/register',
     ),
   );
 }
-
-
-
 
 /**
  * Implements hook_block_configure().
@@ -127,22 +115,30 @@ function freshmail_block_configure($delta = '') {
     case 'freshmail_block':
       $form['freshmail_list_api_key'] = array(
         '#type' => 'textfield',
-        '#title' => t('Klucz Api listy'),
+        '#title' => t('API Key for newsletter'),
         '#size' => 10,
         '#default_value' => variable_get('freshmail_list_api_key'),
       );
       $form['freshmail_api_key'] = array(
         '#type' => 'textfield',
-        '#title' => t('Klucz Api'),
+        '#title' => t('Api Key'),
         '#size' => 32,
         '#default_value' => variable_get('freshmail_api_key'),
       );
       $form['freshmail_api_secret_key'] = array(
         '#type' => 'textfield',
-        '#title' => t('Klucz Api Sekretny'),
+        '#title' => t('Secret Key'),
         '#size' => 40,
         '#default_value' => variable_get('freshmail_api_secret_key'),
       );
+
+      $form['freshmail_mail'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Secret Key'),
+        '#size' => 40,
+        '#default_value' => variable_get('freshmail_mail', ''),
+      );
+
       break;
   }
   return $form;
@@ -160,22 +156,3 @@ function freshmail_block_save($delta = '', $edit = array()) {
       break;
   }
 }
-/**
- * Returns block contents
- */
-/*
-function freshmail_block_list($block_id) {
-  $block = array();
-  var_dump($block_id);
-  switch ($block_id) {
-    case 'freshmail_block':
-      $block = array(
-        'freshmail_list_api_key' => 'a'.variable_get('freshmail_list_api_key'),
-        'freshmail_api_key' => variable_get('freshmail_api_key'),
-        'freshmail_api_secret_key' => variable_get('freshmail_api_secret_key'),
-      );
-      break;
-  }
-  return $block;
-}
-*/
