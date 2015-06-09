@@ -134,9 +134,9 @@ function freshmail_block_configure($delta = '') {
 
       $form['freshmail_mail'] = array(
         '#type' => 'textfield',
-        '#title' => t('Secret Key'),
+        '#title' => t('Email'),
         '#size' => 40,
-        '#default_value' => variable_get('freshmail_mail', ''),
+        '#default_value' => variable_get('freshmail_mail', 'example@example.com'),
       );
 
       break;
@@ -153,6 +153,7 @@ function freshmail_block_save($delta = '', $edit = array()) {
       variable_set('freshmail_list_api_key', $edit['freshmail_list_api_key']);
       variable_set('freshmail_api_key', $edit['freshmail_api_key']);
       variable_set('freshmail_api_secret_key', $edit['freshmail_api_secret_key']);
+      variable_set('freshmail_mail', $edit['freshmail_mail']);
       break;
   }
 }
