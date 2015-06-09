@@ -30,6 +30,7 @@ Under block configuration you must provide 3 API Keys
 1. Subscribers list API Key
 2. Public API Key 
 3. Secret API Key
+4. Email address
 
 
 # SUPPORT
