@@ -16,12 +16,15 @@
         .done(function(data) {
             if (data.status) {
               if (data.status == 'OK') {
-                $form.find('.messages').text(Drupal.t('E-mail został poprawnie dodany. Prosimy o sprawdzenie skrzynki w celu potwierdzenia adresu.'));;
+                $form.find('.freshmail-messege').show();
+                $form.find('.freshmail-messege').text(Drupal.t('E-mail został poprawnie dodany. Prosimy o sprawdzenie skrzynki w celu potwierdzenia adresu.'));
               } else {
-                $form.find('.messages').text(data.status);
+                $form.find('.freshmail-messege').show();
+                $form.find('.freshmail-messege').text(data.status);
               }
             } else if (data.error_message) {
-              $form.find('.messages').text(data.error_message);
+              $form.find('.freshmail-messege').show();
+              $form.find('.freshmail-messege').text(data.error_message);
               alert(data.error_message);
             }
             $input.removeAttr('disabled');

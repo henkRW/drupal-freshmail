@@ -16,18 +16,17 @@ function freshmail_menu() {
 }
 
 function freshmail_api() {
-
+  
   $rest = new FmRestAPI();
   $rest->setApiKey(FM_API_KEY);
   $rest->setApiSecret(FM_API_SECRET);
-
 
 
   $data = array(
     'email' => isset($_POST['email']) ? $_POST['email'] : variable_get('freshmail_mail', 'example@example.com'),
     'list' => FM_API_LIST
   );
-
+  
   try {
     $response = $rest->doRequest('subscriber/add', $data);
     return $response;
@@ -72,12 +71,12 @@ function freshmail_block_view($delta = '') {
     drupal_add_js(drupal_get_path('module', 'freshmail') . '/js/freshmail.js');
     $variables = array(
       'action' => base_path() . 'frashmail_api',
-      'send' => t("Send"),
+      'send' => t("Ok"),
       'placeholder' => t("Your email address")
     );
     $block = array
       (
-      'subject' => '',
+      'subject' => t('Newsletter'),
       'content' => theme('freshmail_template', $variables),
     );
     return $block;
@@ -101,7 +100,7 @@ function freshmail_theme($existing, $type, $theme, $path) {
   return array(
     'freshmail_template' => array(
       'variables' => array(),
-      'template' => 'templates/register',
+      'template' => 'templates/subscribe_form',
     ),
   );
 }
